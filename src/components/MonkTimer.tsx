@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Volume2, VolumeX } from "lucide-react";
 
 const TIMER_DURATION = 5400; // 90 minutes in seconds
 
@@ -9,6 +12,8 @@ interface MonkTimerProps {
   sessionDates: string[];
   onStartSession: () => void;
   onEndSession: () => void;
+  alarmEnabled: boolean;
+  setAlarmEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 const MonkTimer = ({
@@ -16,7 +21,9 @@ const MonkTimer = ({
   timeRemaining,
   sessionDates,
   onStartSession,
-  onEndSession
+  onEndSession,
+  alarmEnabled,
+  setAlarmEnabled
 }: MonkTimerProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -28,9 +35,25 @@ const MonkTimer = ({
     <section className="rounded-lg border border-border bg-card p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground tracking-tight">Monk Mode</h2>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Sessions Completed</p>
-          <p className="font-mono text-xl font-bold text-foreground">{sessionDates.length}</p>
+        <div className="text-right flex items-center gap-6">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="alarm-toggle" className="cursor-pointer">
+              {alarmEnabled ? (
+                <Volume2 className="h-4 w-4 text-primary" />
+              ) : (
+                <VolumeX className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Label>
+            <Switch
+              id="alarm-toggle"
+              checked={alarmEnabled}
+              onCheckedChange={setAlarmEnabled}
+            />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest">Sessions Completed</p>
+            <p className="font-mono text-xl font-bold text-foreground">{sessionDates.length}</p>
+          </div>
         </div>
       </div>
 

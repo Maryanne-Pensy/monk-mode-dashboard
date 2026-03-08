@@ -23,6 +23,8 @@ interface IndexProps {
   setSessionDates: Dispatch<SetStateAction<string[]>>;
   onStartSession: () => void;
   onEndSession: () => void;
+  alarmEnabled: boolean;
+  setAlarmEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 const Index = ({
@@ -32,6 +34,8 @@ const Index = ({
   setSessionDates,
   onStartSession,
   onEndSession,
+  alarmEnabled,
+  setAlarmEnabled,
 }: IndexProps) => {
   const [dark, setDark] = useState(() => {
     if (typeof window !== "undefined") {
@@ -200,6 +204,8 @@ const Index = ({
             sessionDates={sessionDates}
             onStartSession={onStartSession}
             onEndSession={onEndSession}
+            alarmEnabled={alarmEnabled}
+            setAlarmEnabled={setAlarmEnabled}
           />
           <StreakPanel
             revenueStreak={currentRevenueStreak}

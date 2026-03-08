@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,8 +20,62 @@ const AppContent = () => {
     const saved = localStorage.getItem("monkSessionDates");
     return saved ? JSON.parse(saved) : [];
   });
+  const [alarmEnabled, setAlarmEnabled] = useState(() => {
+    const saved = localStorage.getItem("alarmEnabled");
+    return saved ? JSON.parse(saved) : true;
+  });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("alarmEnabled", JSON.stringify(alarmEnabled));
+  }, [alarmEnabled]);
+
+  const stopAlarm = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
+  const playAlarm = () => {
+    if (!alarmEnabled) return;
+
+    // Stop any existing alarm before starting a new one
+    stopAlarm();
+
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    const triggerChime = () => {
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(freq, startTime);
+
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+
+      const now = audioContext.currentTime;
+      playTone(880, now, 1); // A5
+      playTone(1108.73, now + 0.1, 1); // C#6
+      playTone(1318.51, now + 0.2, 1); // E6
+    };
+
+    // Play immediately then repeat every 3 seconds
+    triggerChime();
+    alarmIntervalRef.current = setInterval(triggerChime, 3000);
+  };
 
   useEffect(() => {
     if (isActive && timeRemaining > 0) {
@@ -51,16 +106,28 @@ const AppContent = () => {
     setIsActive(false);
     setTimeRemaining(TIMER_DURATION);
 
-    alert("Monk Session Complete! Focus maintained.");
+    playAlarm();
+
+    toast("Monk Session Complete!", {
+      description: "Focus maintained. Great work.",
+      duration: Infinity,
+      action: {
+        label: "Stop Alarm",
+        onClick: stopAlarm,
+      },
+    });
+
     navigate("/");
   };
 
   const startSession = () => {
+    stopAlarm();
     setIsActive(true);
     navigate("/focus");
   };
 
   const endSession = () => {
+    stopAlarm();
     setIsActive(false);
     setTimeRemaining(TIMER_DURATION);
     navigate("/");
@@ -78,6 +145,8 @@ const AppContent = () => {
             setSessionDates={setSessionDates}
             onStartSession={startSession}
             onEndSession={endSession}
+            alarmEnabled={alarmEnabled}
+            setAlarmEnabled={setAlarmEnabled}
           />
         }
       />
